@@ -18,10 +18,13 @@
 
 package org.servalproject.mappingservices.location;
 
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
 import android.util.Log;
@@ -127,5 +130,32 @@ public class LocationCollector implements LocationListener {
 		}
 
 	}
+	
+	/**
+	 * Get quickly the last known location of the phone. If there's no location,
+	 * fall back to the network based one.
+	 * 
+	 * @param ctx
+	 * @return the location based context
+	 */
+	public static Location getLocation(Context ctx) {
+		LocationManager lm = (LocationManager) ctx
+				.getSystemService(Context.LOCATION_SERVICE);
+		List<String> providers = lm.getProviders(true);
+
+		/*
+		 * Loop over the array backwards, and if you get an accurate location,
+		 * then break out the loop
+		 */
+		Location l = null;
+
+		for (int i = providers.size() - 1; i >= 0; i--) {
+			l = lm.getLastKnownLocation(providers.get(i));
+			if (l != null)
+				break;
+		}
+		return l;
+	}
+
 
 }
