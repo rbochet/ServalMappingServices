@@ -17,6 +17,7 @@
  */
 package org.servalproject.mappingservices;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -148,14 +149,18 @@ public class DisclaimerActivity extends Activity implements OnClickListener {
 				if (localMaps.size() == 1) {
 					showMapActivity(localMaps.get(0));
 				} else if (localMaps.size() > 1) { // Else show message
-					mapFileNamesHere = new String[localMaps.size()];
-					
-					for (int i = 0; i < localMaps.size(); i++) {
-						mapFileNamesHere[i] = localMaps.get(i);
-					}
-					
-					Log.v(TAG, "More than one map");
-					showDialog(DIALOG_LOCAL_MAP_FILE_CHOOSER);
+					 String map = localMaps.get(0);
+					 for (int i = 1; i < localMaps.size(); i++) {
+						// Compare the 
+						long date_map = new File(R.string.paths_map_data + map).lastModified();
+						long date_current = new File(R.string.paths_map_data + localMaps.get(i)).lastModified();
+						// Compare the date
+						if(date_current > date_map) {
+							map = localMaps.get(i);
+						}
+					} 
+					Log.v(TAG, "Map loaded:"+map);
+					showMapActivity(map); 
 				} else
 					// show a dialog to select which map data file to use
 					showDialog(DIALOG_MAP_FILE_CHOOSER);
