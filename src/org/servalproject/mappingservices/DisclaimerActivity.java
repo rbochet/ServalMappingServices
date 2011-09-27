@@ -17,6 +17,7 @@
  */
 package org.servalproject.mappingservices;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.mapsforge.android.maps.MapDatabase;
@@ -65,12 +66,13 @@ public class DisclaimerActivity extends Activity implements OnClickListener {
 	private DisclaimerActivity self;
 	private String mapFileName = null;
 	private String[] mapFileNames = null;
-
+	private String[] mapFileNamesHere = null;
 	/*
 	 * private level constants
 	 */
 	private final int DIALOG_OK_CONTINUE = 0;
 	private final int DIALOG_MAP_FILE_CHOOSER = 1;
+	private static final int DIALOG_LOCAL_MAP_FILE_CHOOSER = 2;
 
 	/*
 	 * Called when the activity is first created
@@ -125,22 +127,38 @@ public class DisclaimerActivity extends Activity implements OnClickListener {
 				Location loc = LocationCollector.getLocation(self);
 				int mlat = (int) (loc.getLatitude() * 1e6);
 				int mlong = (int) (loc.getLongitude() * 1e6);
-				
-				Log.v("RB", "Lat "+mlat+" Long "+mlong);
-				
+
+				// Initialize the tab of maps that describe the local area
+				ArrayList<String> localMaps = new ArrayList<String>();
+
 				// Go thru the list of maps
 				for (String map : mapFileNames) {
 					MapDatabase md = new MapDatabase();
+					boolean ret_open = md.openFile(this
+							.getString(R.string.paths_map_data) + map);
 					Rect bbox = md.getMapBoundary();
-					Log.v("RB", map+ " "+ bbox.flattenToString());
 					if (bbox.contains(mlong, mlat)) {
-						Log.v("RB", "Spotted "+map);
-						showMapActivity(map);
+						Log.v(TAG, "We are  on " + map);
+						// Add to the vector
+						localMaps.add(map);
 					}
 				}
 
-				// show a dialog to select which map data file to use
-				showDialog(DIALOG_MAP_FILE_CHOOSER);
+				// If we have only one candidate, choose it.
+				if (localMaps.size() == 1) {
+					showMapActivity(localMaps.get(0));
+				} else if (localMaps.size() > 1) { // Else show message
+					mapFileNamesHere = new String[localMaps.size()];
+					
+					for (int i = 0; i < localMaps.size(); i++) {
+						mapFileNamesHere[i] = localMaps.get(i);
+					}
+					
+					Log.v(TAG, "More than one map");
+					showDialog(DIALOG_LOCAL_MAP_FILE_CHOOSER);
+				} else
+					// show a dialog to select which map data file to use
+					showDialog(DIALOG_MAP_FILE_CHOOSER);
 			}
 		}
 	}
@@ -190,6 +208,22 @@ public class DisclaimerActivity extends Activity implements OnClickListener {
 						public void onClick(DialogInterface dialog, int item) {
 							DisclaimerActivity.this
 									.showMapActivity(mapFileNames[item]);
+						}
+					});
+
+			mDialog = mBuilder.create();
+			break;
+		case DIALOG_LOCAL_MAP_FILE_CHOOSER:
+			// show the list of files to choose from
+			mBuilder.setTitle(this
+					.getString(R.string.disclaimer_choose_map_file_msg));
+			mBuilder.setCancelable(false);
+
+			mBuilder.setItems(mapFileNamesHere,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int item) {
+							DisclaimerActivity.this
+									.showMapActivity(mapFileNamesHere[item]);
 						}
 					});
 
