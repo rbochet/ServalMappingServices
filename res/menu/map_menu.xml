@@ -9,11 +9,11 @@
 		<menu>
 			<!-- start using mock locations -->
 			<item android:id="@+id/map_menu_mock_locations" android:title="@string/map_menu_mock_locations" />
-			<!--  export from a database -->
+			<!-- export from a database -->
 			<item android:id="@+id/map_menu_export_database" android:title="@string/map_menu_export_database" />
-			<!--  empty the databases -->
+			<!-- empty the databases -->
 			<item android:id="@+id/map_menu_empty_database" android:title="@string/map_menu_empty_database" />
-			<!--  service status -->
+			<!-- service status -->
 			<item android:id="@+id/map_menu_service_status" android:title="@string/map_menu_service_status" />
 		</menu>
 
@@ -21,6 +21,9 @@
 
 	<!-- exit the app -->
 	<item android:id="@+id/menu_shutdown" android:title="@string/menu_shutdown" />
+
+	<item android:id="@+id/menu_change_map" android:title="@string/menu_change_map" />
+
 
 	<!-- show the about activity -->
 	<item android:id="@+id/menu_about" android:title="@string/menu_about" />

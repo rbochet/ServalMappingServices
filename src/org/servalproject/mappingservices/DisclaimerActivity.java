@@ -47,6 +47,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.Toast;
 
 /**
  * An activity that displays a disclaimer when the application starts
@@ -126,44 +127,57 @@ public class DisclaimerActivity extends Activity implements OnClickListener {
 
 				// Our best bet for the location
 				Location loc = LocationCollector.getLocation(self);
-				int mlat = (int) (loc.getLatitude() * 1e6);
-				int mlong = (int) (loc.getLongitude() * 1e6);
 
-				// Initialize the tab of maps that describe the local area
-				ArrayList<String> localMaps = new ArrayList<String>();
+				if (loc == null) {
+					// If we cant get the location because the phone just started
+					showDialog(DIALOG_MAP_FILE_CHOOSER);
+				} else {
+					int mlat = (int) (loc.getLatitude() * 1e6);
+					int mlong = (int) (loc.getLongitude() * 1e6);
 
-				// Go thru the list of maps
-				for (String map : mapFileNames) {
-					MapDatabase md = new MapDatabase();
-					boolean ret_open = md.openFile(this
-							.getString(R.string.paths_map_data) + map);
-					Rect bbox = md.getMapBoundary();
-					if (bbox.contains(mlong, mlat)) {
-						Log.v(TAG, "We are  on " + map);
-						// Add to the vector
-						localMaps.add(map);
+					// Initialize the tab of maps that describe the local area
+					ArrayList<String> localMaps = new ArrayList<String>();
+
+					// Go thru the list of maps
+					for (String map : mapFileNames) {
+						MapDatabase md = new MapDatabase();
+						boolean ret_open = md.openFile(this
+								.getString(R.string.paths_map_data) + map);
+						Rect bbox = md.getMapBoundary();
+						if (bbox.contains(mlong, mlat)) {
+							Log.v(TAG, "We are  on " + map);
+							// Add to the vector
+							localMaps.add(map);
+						}
+					}
+
+					// If we have only one candidate, choose it.
+					if (localMaps.size() == 1) {
+						showMapActivity(localMaps.get(0));
+					} else if (localMaps.size() > 1) { // Else show message
+						String map = localMaps.get(0);
+						for (int i = 1; i < localMaps.size(); i++) {
+							// Compare the
+							long date_map = new File(R.string.paths_map_data
+									+ map).lastModified();
+							long date_current = new File(
+									R.string.paths_map_data + localMaps.get(i))
+									.lastModified();
+							// Compare the date
+							if (date_current > date_map) {
+								map = localMaps.get(i);
+							}
+						}
+						Log.v(TAG, "Map loaded:" + map);
+						showMapActivity(map);
+						Toast.makeText(this.getApplicationContext(),
+								R.string.map_using_default + map,
+								Toast.LENGTH_LONG).show();
+					} else {
+						// show a dialog to select which map data file to use
+						showDialog(DIALOG_MAP_FILE_CHOOSER);
 					}
 				}
-
-				// If we have only one candidate, choose it.
-				if (localMaps.size() == 1) {
-					showMapActivity(localMaps.get(0));
-				} else if (localMaps.size() > 1) { // Else show message
-					 String map = localMaps.get(0);
-					 for (int i = 1; i < localMaps.size(); i++) {
-						// Compare the 
-						long date_map = new File(R.string.paths_map_data + map).lastModified();
-						long date_current = new File(R.string.paths_map_data + localMaps.get(i)).lastModified();
-						// Compare the date
-						if(date_current > date_map) {
-							map = localMaps.get(i);
-						}
-					} 
-					Log.v(TAG, "Map loaded:"+map);
-					showMapActivity(map); 
-				} else
-					// show a dialog to select which map data file to use
-					showDialog(DIALOG_MAP_FILE_CHOOSER);
 			}
 		}
 	}
@@ -256,6 +270,7 @@ public class DisclaimerActivity extends Activity implements OnClickListener {
 		mMapIntent.putExtra("mapFileName", mapFileName); // pass the name of the
 															// map data file to
 															// the activity
+		mMapIntent.putExtra("mapFileNames", mapFileNames);
 		startActivityForResult(mMapIntent, 0); // be informed when the activity
 												// finishes
 

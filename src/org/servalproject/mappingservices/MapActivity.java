@@ -20,6 +20,9 @@ package org.servalproject.mappingservices;
 import java.io.IOException;
 import java.util.HashMap;
 
+import org.mapsforge.android.maps.GeoPoint;
+import org.mapsforge.android.maps.ItemizedOverlay;
+import org.mapsforge.android.maps.MapView;
 import org.servalproject.mappingservices.content.DatabaseUtils;
 import org.servalproject.mappingservices.content.IncidentProvider;
 import org.servalproject.mappingservices.content.LocationProvider;
@@ -27,12 +30,6 @@ import org.servalproject.mappingservices.content.RecordTypes;
 import org.servalproject.mappingservices.location.MockLocationCreator;
 import org.servalproject.mappingservices.mapsforge.OverlayItem;
 import org.servalproject.mappingservices.mapsforge.OverlayList;
-
-//import org.mapsforge.android.maps.ArrayItemizedOverlay;
-import org.mapsforge.android.maps.GeoPoint;
-import org.mapsforge.android.maps.ItemizedOverlay;
-import org.mapsforge.android.maps.MapView;
-//import org.mapsforge.android.maps.OverlayItem;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -79,7 +76,9 @@ public class MapActivity extends org.mapsforge.android.maps.MapActivity implemen
 	
 	private static final int DIALOG_EMPTY_DB = 0;
 	private static final int DIALOG_EXPORT_DB = 1;
+	private static final int DIALOG_MAP_FILE_CHOOSER = 2;
 	private static final CharSequence[] DATABASE_LIST = {"Incidents", "Locations"};
+
 	
 	
 	/*
@@ -102,6 +101,11 @@ public class MapActivity extends org.mapsforge.android.maps.MapActivity implemen
     
     private MockLocationCreator mockLocationCreator;
     private Thread mockLocationThread = null;
+
+    /** List of all the maps available */
+	private String[] mapFileNames;
+
+	private org.mapsforge.android.maps.OverlayItem mBuilder;
 	
 	
 	/*
@@ -118,6 +122,7 @@ public class MapActivity extends org.mapsforge.android.maps.MapActivity implemen
         // get the map data file name
         Bundle mBundle = this.getIntent().getExtras();
         String mMapFileName = mBundle.getString("mapFileName");
+        mapFileNames = mBundle.getStringArray("mMapFileNames");
         
         if(V_LOG) {
         	Log.v(TAG, "map file name: " + mMapFileName);
@@ -188,6 +193,9 @@ public class MapActivity extends org.mapsforge.android.maps.MapActivity implemen
         	this.startActivityForResult(mIntent, 0);
         	mStatus = true;
             break;
+        case R.id.menu_change_map:
+			// show the list of files to choose from
+			showDialog(DIALOG_MAP_FILE_CHOOSER);
         case R.id.menu_shutdown:
         	// works the same if the back button is pressed
         	this.onBackPressed();
@@ -284,6 +292,24 @@ public class MapActivity extends org.mapsforge.android.maps.MapActivity implemen
     		
     		mDialog = mBuilder.create();
     		break;
+    	case DIALOG_MAP_FILE_CHOOSER:
+    		Log.v("RB", "Click on map file chooser");
+			// show the list of files to choose from
+			mBuilder.setTitle(this
+					.getString(R.string.disclaimer_choose_map_file_msg));
+			mBuilder.setCancelable(false);
+    		Log.v("RB", "Click on map file chooser");
+
+			mBuilder.setItems(mapFileNames,
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int item) {
+							Log.v("RB", "Click occured "+item);
+						}
+					});
+
+			mDialog = mBuilder.create();
+			break;
+
     	default:
     		mDialog = null;
     	}
